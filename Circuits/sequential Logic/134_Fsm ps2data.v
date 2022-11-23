@@ -1,3 +1,75 @@
+//2022-11-20再做
+module top_module(
+    input clk,
+    input [7:0] in,
+    input reset,    // Synchronous reset
+    output [23:0] out_bytes,
+    output reg done); //
+
+    parameter WAIT = 2'd0, D1 = 2'd1, D2 = 2'd2, D3 = 2'd3;
+    reg [1:0] st,next_st;
+
+    reg [23:0] out_bytes_reg;
+    assign out_bytes = out_bytes_reg; //只有done信号为1的时候的值才有用，否则没用。
+
+    always @(posedge clk) begin
+        if (reset)
+            out_bytes_reg = 24'd0;
+        else
+            out_bytes_reg = {out_bytes_reg[15:0],in};    
+    end
+
+    always @(*) begin
+        case (st)
+            WAIT: begin    // 注意处理next_st和done的条件的st不是同一个st。
+                next_st = in[3] ? D1 : WAIT;  done = 1'b0;
+            end
+                
+            D1: begin
+                next_st = D2; done = 1'b0;
+            end
+                
+            D2: begin
+                next_st = D3; done = 1'b0;
+            end
+
+            D3: begin
+                next_st = in[3] ? D1 : WAIT;    done = 1'b1;
+            end     
+
+            default: begin
+                next_st = WAIT;  done = 1'b0;
+            end     
+        endcase
+    end
+
+    always @(posedge clk) begin
+        if (reset)
+            st <= WAIT;
+        else 
+            st <= next_st;    
+    end 
+
+endmodule
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//=================================================================================
 module top_module(
     input clk,
     input [7:0] in,
